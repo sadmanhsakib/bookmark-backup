@@ -1,7 +1,7 @@
 > **⚠️ ARCHIVED PROJECT**  
 > This project is archived and now part of my [Automation-Toolbox](https://github.com/sadmanhsakib/Automation-Toolbox) repository.
 
-# Auto-Bookmark-Backup
+# bookmark-backup
 
 A lightweight Python utility that automatically backs up Chromium-based browser bookmarks (Brave, Chrome, Edge, etc.) to a portable HTML format while preserving the folder hierarchy.
 
@@ -33,8 +33,8 @@ This script is designed to run silently in the background (`.pyw`), making it pe
 
 1.  **Clone the Repository**
     ```bash
-    git clone https://github.com/yourusername/Auto-Bookmark-Backup.git
-    cd Auto-Bookmark-Backup
+    git clone https://github.com/yourusername/bookmark-backup.git
+    cd bookmark-backup
     ```
 
 2.  **Install Dependencies**
@@ -58,7 +58,7 @@ Simply double-click `main.pyw` or run it via terminal:
 ```bash
 python main.pyw
 ```
-This will generate a file named `Brave_bookmark_backup.HTML` in the same directory.
+This will generate a file named `bookmark_backup_[COUNT]_[DATE].HTML` in the same directory.
 
 ### Automated Backup (Recommended)
 To ensure your bookmarks are always safe, set up a Windows Task Scheduler task:
