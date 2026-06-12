@@ -1,75 +1,233 @@
 > **⚠️ ARCHIVED PROJECT**  
 > This project is archived and now part of my [Automation-Toolbox](https://github.com/sadmanhsakib/Automation-Toolbox) repository.
 
-# bookmark-backup
+# Browser Bookmark Backup Utility
 
-A lightweight Python utility that automatically backs up Chromium-based browser bookmarks (Brave, Chrome, Edge, etc.) to a portable HTML format while preserving the folder hierarchy.
+## Overview
 
-## 📖 Overview
+This utility provides automated backup functionality for Chromium-based browser bookmarks. The script extracts bookmark data from browser-native JSON storage and exports it to standards-compliant HTML bookmark format files. Backup rotation is implemented to manage storage consumption.
 
-Browsers typically store bookmarks in a local JSON file that isn't directly usable for importing into other browsers or easy reading. **Auto-Bookmark-Backup** parses this internal JSON file and converts it into a standard `Netscape Bookmark File` (HTML) format.
+## Operational Characteristics
 
-This script is designed to run silently in the background (`.pyw`), making it perfect for automated, scheduled backups to ensure you never lose your important links.
+### Supported Browser Formats
 
-## ✨ Key Features
+The utility operates on Chromium bookmark JSON structures. Compatibility extends to:
 
--   **Universal Compatibility**: Converts proprietary JSON bookmarks into standard HTML importable by any web browser.
--   **Hierarchy Preservation**: Maintains your exact folder structure and nesting order.
--   **Silent Operation**: Runs without opening a terminal window, ideal for background tasks.
--   **Automation Ready**: Designed to be used with Windows Task Scheduler for "set it and forget it" backups.
+- Google Chrome
+- Microsoft Edge
+- Brave Browser
+- Opera
+- Vivaldi
+- Other Chromium derivatives
 
-## 🌍 Real-World Use Cases
+### Backup Scope
 
-1.  **Automated Safety Net**: Schedule the script to run weekly. If your browser profile gets corrupted or you accidentally delete a folder, you have a recent, restore-ready backup.
-2.  **Browser Migration**: Easily move your bookmarks from one Chromium browser (e.g., Brave) to another (e.g., Firefox or Safari) without relying on cloud sync.
-3.  **Versioned Backups**: Use this script in a Dropbox/OneDrive folder or a Git repository to keep a history of how your bookmarks have changed over time.
+The script processes two bookmark categories per browser profile:
 
-## 🛠️ Prerequisites
+1. **Bookmark Bar**: Primary user-facing bookmark toolbar
+2. **Other Bookmarks**: Secondary bookmark storage location
 
--   **Python 3.x** installed on your system.
--   **`python-dotenv`** library for managing configuration.
+Bookmark hierarchy, including nested folder structures, is preserved in the exported HTML.
 
-## 🚀 Installation & Setup
+## Technical Implementation
 
-1.  **Clone the Repository**
-    ```bash
-    git clone https://github.com/yourusername/bookmark-backup.git
-    cd bookmark-backup
-    ```
+### Data Processing Pipeline
 
-2.  **Install Dependencies**
-    ```bash
-    pip install python-dotenv
-    ```
+1. **Source Ingestion**: JSON bookmark files are parsed using Python's standard `json` module
+2. **Recursive Extraction**: Bookmark folder trees are traversed recursively to maintain hierarchical relationships
+3. **Format Conversion**: Bookmarks are transformed to Netscape Bookmark File Format 1 (HTML)
+4. **File Generation**: Output files are written with UTF-8 encoding to ensure international character support
+5. **Rotation Management**: Backup files exceeding the configured retention limit are removed in chronological order
 
-3.  **Configure the Path**
-    Create a file named `.env` in the project directory. Add the path to your browser's `Bookmarks` file.
+### Execution Model
 
-    **Example `.env` file:**
-    ```env
-    BOOKMARK_PATH="C:/Users/YourName/AppData/Local/BraveSoftware/Brave-Browser/User Data/Default/Bookmarks"
-    ```
-    > **Tip**: You can find your specific path by searching online for "Where does [Your Browser] store bookmarks?"
+The script is implemented as a Python Windows script (`.pyw` extension), enabling silent execution without console window instantiation. This design accommodates scheduled task automation without user interface interruption.
 
-## 💻 Usage
+## Configuration Requirements
 
-### Manual Run
-Simply double-click `main.pyw` or run it via terminal:
+### Environment Variables
+
+Configuration is managed through environment variables loaded from a `.env` file. The following parameters must be defined:
+
+| Variable | Required | Description | Constraints |
+|----------|------|-------------|-------------|
+| `BOOKMARK_DIRS` | MUST | Comma-separated absolute paths to browser bookmark JSON files | Must be valid file paths with read permissions |
+| `OUTPUT_DIR` | Optional | Absolute path for backup file storage | Directory must be writable; created if nonexistent |
+| `MAX_BACKUP` | Optional | Maximum number of backup files to retain per browser | Set to `0` for unlimited retention |
+
+### Configuration Template
+
+A configuration template is provided in `example.env`:
+
+```
+BOOKMARK_DIRS=
+OUTPUT_DIR=
+MAX_BACKUP=
+```
+
+### Locating Browser Bookmark Files
+
+Bookmark JSON files are typically located at the following system paths:
+
+**Google Chrome / Microsoft Edge / Brave:**
+```
+%LOCALAPPDATA%\{BrowserVendor}\{BrowserName}\User Data\Default\Bookmarks
+```
+
+**Example Paths:**
+```
+C:\Users\{Username}\AppData\Local\Google\Chrome\User Data\Default\Bookmarks
+C:\Users\{Username}\AppData\Local\Microsoft\Edge\User Data\Default\Bookmarks
+C:\Users\{Username}\AppData\Local\BraveSoftware\Brave-Browser\User Data\Default\Bookmarks
+```
+
+### Configuration Example
+
+```env
+BOOKMARK_DIRS=C:\Users\JDoe\AppData\Local\Google\Chrome\User Data\Default\Bookmarks,C:\Users\JDoe\AppData\Local\Microsoft\Edge\User Data\Default\Bookmarks
+OUTPUT_DIR=D:\Backups\Bookmarks
+MAX_BACKUP=30
+```
+
+## Installation
+
+### Prerequisites
+
+- Python 3.7 or higher
+- `python-dotenv` package
+
+### Dependency Installation
+
+```bash
+pip install python-dotenv
+```
+
+### Repository Setup
+
+1. Clone or download the repository
+2. Copy `example.env` to `.env`
+3. Configure environment variables in `.env`
+4. Verify bookmark file paths and permissions
+
+## Execution
+
+### Manual Execution
+
 ```bash
 python main.pyw
 ```
-This will generate a file named `bookmark_backup_[COUNT]_[DATE].HTML` in the same directory.
 
-### Automated Backup (Recommended)
-To ensure your bookmarks are always safe, set up a Windows Task Scheduler task:
+### Automated Scheduling (Windows Task Scheduler)
 
-1.  Open **Task Scheduler**.
-2.  Click **Create Basic Task** and name it "Bookmark Backup".
-3.  Set the **Trigger** (e.g., Weekly, every Friday).
-4.  Set the **Action** to "Start a program".
-5.  Browse and select the `main.pyw` file.
-    *   *Note: In the "Start in (optional)" field, paste the full path to the script's folder to ensure it finds the `.env` file.*
+The utility is designed for unattended operation via Windows Task Scheduler:
 
-## 📄 License
+1. Open Task Scheduler (`taskschd.msc`)
+2. Create a new task with the following configuration:
+   - **Trigger**: Daily or at system startup (as required)
+   - **Action**: Start a program
+   - **Program/script**: `pythonw.exe` (for windowless execution)
+   - **Arguments**: `"D:\scripts\bookmark-backup\main.pyw"` (adjust path accordingly)
+   - **Start in**: `D:\scripts\bookmark-backup` (script directory)
+3. Configure task to run whether user is logged in or not
+4. Set highest privileges if bookmark files require elevated access
 
-This project is open-source and available for personal and educational use.
+## Output Specification
+
+### File Naming Convention
+
+Backup files are named according to the following pattern:
+
+```
+bookmark_backup_{index}_{YYYY-MM-DD}.html
+```
+
+- `{index}`: Sequential identifier when multiple bookmark sources are configured (1-based indexing)
+- `{YYYY-MM-DD}`: ISO 8601 date format representing backup creation date
+
+### HTML Format Compliance
+
+Output files conform to the Netscape Bookmark File Format, ensuring compatibility with:
+
+- All major web browsers (Chrome, Firefox, Safari, Edge, Opera)
+- Bookmark management utilities
+- Cross-platform bookmark synchronization tools
+
+## Security Considerations
+
+### Credential Exposure Risk
+
+Browser bookmark files may contain URLs with embedded credentials (e.g., `https://user:password@example.com`). Organizations should assess exposure risk before deploying this utility in shared or cloud-synced storage environments.
+
+### File System Permissions
+
+- The `.env` configuration file contains sensitive file paths and should be excluded from version control
+- Output directory access should be restricted to authorized users
+- Backup files should be protected with appropriate file system ACLs
+
+### Data Residency
+
+Backup files are stored locally. No network transmission or external service integration is performed by the utility.
+
+## Limitations and Known Constraints
+
+1. **Browser Lock State**: The script does not verify whether source bookmark files are locked by running browser instances. Chromium browsers typically allow read access during operation, but data consistency is not guaranteed.
+
+2. **Atomic Write Operations**: File write operations are not atomic. System failure during execution may result in incomplete backup files.
+
+3. **Error Handling**: The implementation does not include comprehensive error handling for:
+   - Missing or inaccessible source files
+   - Insufficient disk space
+   - Invalid JSON structures
+   - Permission denial on output directory
+
+4. **Bookmark Metadata Loss**: The following metadata is not preserved in HTML export:
+   - Bookmark favicons
+   - Creation/modification timestamps (beyond date in filename)
+   - Custom bookmark properties
+   - Browser-specific extensions
+
+5. **Concurrent Execution**: The script does not implement file locking. Concurrent executions may result in race conditions during backup rotation.
+
+6. **Character Encoding**: While UTF-8 encoding is specified, special characters in bookmark titles or URLs are not escaped for HTML entities. This may cause rendering issues with certain character sets.
+
+## Operational Recommendations
+
+1. **Backup Verification**: Periodic validation of backup file integrity is recommended through manual import testing
+2. **Retention Policy**: Configure `MAX_BACKUP` based on available storage and regulatory retention requirements
+3. **Monitoring**: Implement external monitoring for script execution failures when deployed in scheduled automation
+4. **Browser Closure**: For maximum data consistency, configure scheduled tasks to execute when browsers are closed
+5. **Differential Backup**: The utility does not implement differential or incremental backup. Each execution produces a complete snapshot
+
+## Dependency Management
+
+The utility requires the following Python package:
+
+- **python-dotenv** (>=0.19.0): Environment variable management
+
+No transitive dependencies with known critical vulnerabilities at time of documentation.
+
+## License
+
+This software is distributed under the MIT License. See `LICENSE` file for complete terms.
+
+The software is provided "as is" without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement.
+
+## Support and Maintenance
+
+This utility is provided as a standalone script without guaranteed support or maintenance commitments. Organizations deploying this utility should:
+
+1. Conduct internal code review prior to production deployment
+2. Establish internal ownership for maintenance and security updates
+3. Implement appropriate testing procedures
+4. Document any modifications to the source code
+
+## Version Information
+
+- **Script Version**: Not versioned (single-file utility)
+- **Python Compatibility**: 3.7+
+- **Platform**: Windows (adaptable to POSIX systems with path modifications)
+- **Last Updated**: 2025 (per license file)
+
+---
+
+For questions regarding implementation details or modification requirements, refer to the source code documentation in `main.pyw`.
