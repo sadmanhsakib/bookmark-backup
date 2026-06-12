@@ -1,18 +1,22 @@
-import os
-import json
-import dotenv
 import datetime
+import json
+import os
 
-dotenv.load_dotenv(".env")
+from dotenv import load_dotenv
+from pathlib import Path
 
-bookmark_paths = os.getenv("BOOKMARK_PATHS").split(",")
+load_dotenv()
+
+PROJECT_ROOT = Path(__file__).parent
+
+BOOKMARK_DIRS = os.getenv("BOOKMARK_DIRS").split(",")
+OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR")) or PROJECT_ROOT
+MAX_BACKUP = int(os.getenv("MAX_BACKUP")) or 0
+
 
 def main():
-    i = 0
-
-    for path in bookmark_paths:
-        i += 1
-
+    # creating the backup
+    for i, path in enumerate(BOOKMARK_DIRS, 1):
         with open(path, "r") as bookmark:
             # stores the bookmark data into a python dict
             data = json.load(bookmark)
@@ -23,13 +27,25 @@ def main():
 
         all_bookmarks = bookmark_bar + other_bookmarks
 
-        # exports the HTML file
-        exporting_to_HTML(all_bookmarks, i)
+        exporting_to_HTML(bookmarks=all_bookmarks, index=i)
+
+    backup_filenames = [
+        f for f in os.listdir(OUTPUT_DIR) if f.startswith("bookmark_backup_")
+    ]
+    
+    # removing old backups
+    if MAX_BACKUP > 0 and len(backup_filenames) > MAX_BACKUP:
+        backup_filenames.sort()
+        
+        for filename in backup_filenames[:-MAX_BACKUP]:
+            os.remove(OUTPUT_DIR / filename)
 
 
-# extracts all the bookmarks recursively from the JSON file
-# if there is no indent_level as argument, use 0 as default value
-def extract_bookmarks(json_data, indent_level=0):
+def extract_bookmarks(json_data: json, indent_level: int = 0):
+    """
+    extracts all the bookmarks recursively from the JSON file
+    if there is no indent_level as argument, use 0 as default value
+    """
     html_content = ""
     indent = "  " * indent_level
 
@@ -49,13 +65,11 @@ def extract_bookmarks(json_data, indent_level=0):
 
             # End of the folder
             html_content += f"{indent}</DL><p>\n"
-
-    # returns html contents ready to write
     return html_content
 
 
-# exports a HTML file using the all extracted bookmarks
-def exporting_to_HTML(bookmarks, i):
+def exporting_to_HTML(bookmarks: str, index: int): 
+    """exports a HTML file using the all extracted bookmarks"""
     # the initials of the file
     html_headers = """<!DOCTYPE NETSCAPE-Bookmark-file-1>
 <HTML>
@@ -70,10 +84,14 @@ def exporting_to_HTML(bookmarks, i):
     full_html = html_headers + bookmarks + html_footer
 
     filename = (
-        f"bookmark_backup_{i}_{datetime.datetime.now().strftime('%Y-%m-%d')}.html"
+        f"bookmark_backup_{index}_{datetime.datetime.now().strftime('%Y-%m-%d')}.html"
     )
-    # force opens a html file
-    with open(filename, "w", encoding="utf-8") as file:
+    
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    
+    filepath = os.path.join(OUTPUT_DIR, filename)
+    
+    with open(filepath, "w", encoding="utf-8") as file:
         file.write(full_html)
 
 
